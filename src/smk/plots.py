@@ -24,12 +24,9 @@ def plot_cov_mat(kernel, ax, xx):
     ax.matshow(kernel(xx, xx).numpy())
 
 
-def spectral_density(smk, nyquist):
-    mus = smk.mixture_means.detach().reshape(-1, 1) % nyquist
-    sigmas = smk.mixture_scales.detach().reshape(-1, 1)
-    mix = Categorical(smk.mixture_weights.detach())
-    comp = Independent(Normal(mus, sigmas), 1)
-    return MixtureSameFamily(mix, comp)
+def plot_kernel(kernel, ax, xx=torch.linspace(-0.1, 0.1, 1000), col="tab:blue"):
+    x0 = torch.zeros(xx.size(0))
+    ax.plot(xx.numpy(), np.diag(kernel(xx, x0).numpy()), color=col)
 
 
 def plot_density(freq, density, ax):

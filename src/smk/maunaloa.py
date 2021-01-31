@@ -5,31 +5,28 @@ import numpy as np
 
 import torch
 import pandas as pd
-import gpytorch as gp
 from sklearn.preprocessing import StandardScaler
-
-from smk.models import GP
 
 
 ROOT_DIR = Path(path.dirname(path.abspath(__file__))) / ".." / ".."
 DATA_DIR = ROOT_DIR / "data"
 
 
-F_s = 1
-T = 1 / F_s
-nyquist = F_s / 2
-
-
 def load() -> pd.DataFrame:
     path = DATA_DIR / "monthly_in_situ_co2_mlo.csv"
-    df = pd.read_csv(path, header=54).iloc[3:, [3, 4]]
+
+    # first obs is missing and cannot be interpolated so we drop it
+    df = pd.read_csv(path, header=58).iloc[:, [3, 4]]
     df.columns = ["Date", "CO2 (ppm)"]
     df["Date"] = df["Date"].astype(float)
     df["CO2 (ppm)"] = (
-        df["CO2 (ppm)"].astype(float).replace(to_replace=-99.99, value=np.nan)
+        df["CO2 (ppm)"]
+        .astype(float)
+        .replace(to_replace=-99.99, value=np.nan)
+        .interpolate()
     )
     df["Data Split"] = df["Date"].apply(lambda x: "train" if x < 1985 else "test")
-    return df.dropna()
+    return df
 
 
 def preprocess(df):
@@ -66,13 +63,6 @@ def preprocess(df):
 def plot_fit(xx, yy, lower, upper, ax):
     ax.plot(xx, yy, color="tab:blue", label="Mean prediction")
     ax.fill_between(xx, upper, lower, alpha=0.5, label="Confidence")
-
-
-# fig, ax = plt.subplots(figsize=(9, 6))
-# sns.lineplot(data=df, x='Date', y='Carbon Dioxide (ppm)', hue='Data Split', ax=ax)
-# ax.set_title('Mauna Loa dataset', fontsize=20)
-# ax.legend(fontsize=16)
-# fig.show()
 
 
 def plot_data(x, y, ax, **kwargs):

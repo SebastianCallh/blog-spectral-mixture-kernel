@@ -2,19 +2,19 @@
 
 import math
 from typing import Callable
+from smk.models import GP
 
 import torch
-from torch import nn
 from torch.optim import AdamW
 import gpytorch as gp
 from tqdm import tqdm
 
 
 def train(
-    model: nn.Module,
+    model: GP,
     train_x: torch.Tensor,
     train_y: torch.Tensor,
-    num_epochs: int,
+    num_iters: int,
     lr: float = 0.1,
     show_progress: bool = True,
 ):
@@ -25,28 +25,28 @@ def train(
     mll = gp.mlls.ExactMarginalLogLikelihood(model.likelihood, model)
 
     loss = 0
-    epochs_iter = (
-        tqdm(range(num_epochs), desc="Epoch") if show_progress else range(num_epochs)
+    iterator = (
+        tqdm(range(num_iters), desc="Epoch") if show_progress else range(num_iters)
     )
 
-    for _ in epochs_iter:
+    for _ in iterator:
         optimizer.zero_grad()
         output = model(train_x)
         loss = -mll(output, train_y)
         loss.backward()
         optimizer.step()
         if show_progress:
-            epochs_iter.set_postfix(loss=loss.item())
+            iterator.set_postfix(loss=loss.item())
 
     return loss.detach().cpu().item()
 
 
 def train_with_restarts(
-    make_model: Callable[[], nn.Module],
-    num_epochs: int,
+    make_model: Callable[[], GP],
+    num_iters: int,
     num_restarts: int = 5,
-    **kwargs
-):
+    **kwargs,
+) -> GP:
     """Trains the provided model by maximising the marginal likelihood.
     Performs several restarts and returns the best model to avoid bad local minima.
     """
@@ -58,7 +58,7 @@ def train_with_restarts(
             model,
             model.train_inputs[0],
             model.train_targets,
-            num_epochs,
+            num_iters,
             **kwargs,
         )
 
