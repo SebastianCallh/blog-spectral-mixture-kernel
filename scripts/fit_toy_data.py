@@ -2,7 +2,7 @@ import math
 import torch
 from matplotlib import pyplot as plt
 
-from smk.models import smk_gp, spectral_density
+from smk.models import SMKernelGP
 from smk.train import train
 from smk.plots import plot_density, plot_kernel, save_plot
 
@@ -18,7 +18,7 @@ y = (
     + torch.sin(5 * 2 * math.pi * x)
 ) / 3 + torch.randn(N) * 0.1
 
-model = smk_gp(x, y, num_mixtures=10)
+model = SMKernelGP(x, y, num_mixtures=10)
 loss = train(model, x, y, num_iters=1200, lr=0.05)
 
 
@@ -35,7 +35,7 @@ def plot_model_fit():
     ax_t.scatter(x, y, label="Observations")
     ax_t.legend()
 
-    density = spectral_density(smk=model.cov, nyquist=nyquist)
+    density = model.spectral_density()
     freq = torch.linspace(0, nyquist, 5000).reshape(-1, 1)
     plot_density(freq, density.log_prob(freq).exp(), ax=ax_f)
     ax_f.set_ylabel("Density")
