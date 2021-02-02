@@ -30,4 +30,5 @@ for k, title, col, ax in zip(kernels, titles, colors, axs):
     ax.set_ylabel("Similarity")
     ax.set_xlabel("Distance")
 
+fig.tight_layout()
 save_plot(fig, "example_kernels")
